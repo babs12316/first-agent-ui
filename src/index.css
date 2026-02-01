@@ -61,7 +61,7 @@ button:focus-visible {
  
 }
 .error{
-  color: 'red';
+  color: red;
 }
 
 @media (prefers-color-scheme: light) {

@@ -12,6 +12,8 @@ function App() {
   const [error, setError] = useState<string| null>('')
   const [reply, setReply] = useState<string>('')
 
+  const apiUrl= import.meta.env.VITE_API_URL
+
   const sendMessage = async() => {
     if(!message.trim()) return
     setLoading(true);
@@ -19,7 +21,7 @@ function App() {
 
     try {
 
-      const response = await fetch("http://localhost:8000/chat",{
+      const response = await fetch(`${apiUrl}/chat`,{
         method: 'POST',
         headers:{"Content-Type": "application/json" },
         body: JSON.stringify({message})
