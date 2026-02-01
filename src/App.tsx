@@ -29,7 +29,7 @@ function App() {
       const data: ChatResponse = await response.json()
       setReply(data.reply)
     }catch(error){
-      setError('ailed to get response from server')
+      setError('failed to get response from server')
     }finally{
       setLoading(false)
     }
@@ -38,11 +38,11 @@ function App() {
 
   return (
     <>
-      <div style={{ padding: 24, maxWidth: 6000, margin: "auto" }}>
+      <div className='chat-wrapper'>
         <h2>LLM Agent chat</h2>
         <textarea
-          placeholder='ask something'
-          style={{ width: "50%" }}
+        className='styled-textarea'
+          placeholder='ask about weather or addition'
           rows={4}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -50,12 +50,11 @@ function App() {
         <button 
         onClick={sendMessage}
         disabled={loading}
-        style={{marginTop:"12px"}}
         >
         {loading? 'Thinking' : 'Send '}
         </button>
 
-        {error && <p style={{color:"red"}}> {error} </p>}
+        {error && <p  className='error'> {error} </p>}
 
         {reply && (
           <div style= {{marginTop:20}}>
