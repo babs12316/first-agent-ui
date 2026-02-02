@@ -44,7 +44,7 @@ function App() {
         <h2>LLM Agent chat</h2>
         <textarea
         className='styled-textarea'
-          placeholder='ask about weather or addition'
+          placeholder='Ask about weather in any city'
           rows={4}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -59,7 +59,7 @@ function App() {
         {error && <p  className='error'> {error} </p>}
 
         {reply && (
-          <div style= {{marginTop:20}}>
+          <div className='reply-box'>
           <strong>Agent :</strong>
           <p>{reply}</p>
             </div>
