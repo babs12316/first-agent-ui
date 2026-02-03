@@ -44,7 +44,7 @@
 
 @media (max-width: 500px) {
   .styled-textarea {
-    width: 90%;   /* fit small screens */
+    width: 90%; 
     max-width: 90%;
   }
 }
