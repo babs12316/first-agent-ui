@@ -1,71 +1,92 @@
 import { useState } from 'react'
 import './App.css'
-
-type ChatResponse = {
-reply:string 
-}
+import Markdown from "react-markdown"
 
 function App() {
-
   const [message, setMessage] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string| null>('')
-  const [reply, setReply] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<string>("")
 
-  const apiUrl= import.meta.env.VITE_API_URL
+  const apiUrl = import.meta.env.VITE_API_URL
 
-  const sendMessage = async() => {
-    if(!message.trim()) return
-    setLoading(true);
+  const startStreaming = async () => {
+    if (!message.trim()) return
+    
+    setLoading(true)
     setError(null)
+    setData("") // Clear previous data
 
     try {
-
-      const response = await fetch(`${apiUrl}/chat`,{
+      const response = await fetch(`${apiUrl}/chat`, {
         method: 'POST',
-        headers:{"Content-Type": "application/json" },
-        body: JSON.stringify({message})
-
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
       })
 
-      const data: ChatResponse = await response.json()
-      setReply(data.reply)
-    }catch(error){
-      setError('failed to get response from server')
-    }finally{
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body!.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        
+        // Parse SSE format: "data: content\n\n"
+        const lines = chunk.split('\n')
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const content = line.slice(6) // Remove "data: " prefix
+            
+            // Skip [DONE] signal
+            if (content === '[DONE]') continue
+            
+            // For plain text streaming
+            setData((prev) => prev + content)
+            
+            }
+        }
+      }
+    } catch (error) {
+      setError('Failed to get response from server')
+      console.error("Error:", error)
+    } finally {
       setLoading(false)
     }
-
   }
 
   return (
     <>
       <div className='chat-wrapper'>
-        <h2>LLM Agent chat</h2>
+        <h2>LLM Agent Chat</h2>
         <textarea
-        className='styled-textarea'
+          className='styled-textarea'
           placeholder='Ask about weather in any city'
           rows={4}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
         <button 
-        onClick={sendMessage}
-        disabled={loading}
+          onClick={startStreaming}
+          disabled={loading}
         >
-        {loading? 'Thinking' : 'Send '}
+          {loading ? 'Thinking...' : 'Send'}
         </button>
 
-        {error && <p  className='error'> {error} </p>}
+        {error && <p className='error'>{error}</p>}
 
-        {reply && (
+        {data && (
           <div className='reply-box'>
-          <strong>Agent :</strong>
-          <p>{reply}</p>
-            </div>
+            <strong>Agent:</strong>
+            <Markdown>{data}</Markdown>
+          </div>
         )}
-
-
       </div>
     </>
   )
