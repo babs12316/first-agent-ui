@@ -1,94 +1,133 @@
-import { useState } from 'react'
-import './App.css'
+import { useEffect, useRef, useState } from "react"
+import { fetchEventSource } from "@microsoft/fetch-event-source"
 import Markdown from "react-markdown"
+import "./App.css"
+
+type Message = {
+  role: "user" | "assistant"
+  content: string
+}
 
 function App() {
-  const [message, setMessage] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [data, setData] = useState<string>("")
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   const apiUrl = import.meta.env.VITE_API_URL
 
-  const startStreaming = async () => {
-    if (!message.trim()) return
-    
-    setLoading(true)
+  // Stable thread ID for short-term memory
+  const [threadId] = useState(() => crypto.randomUUID())
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const sendMessage = async () => {
+    if (!input.trim()) return
+
+    const userMessage = input
+    setInput("")
     setError(null)
-    setData("") // Clear previous data
+
+
+    // Add user message
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: userMessage }
+    ])
+
+    const controller = new AbortController()
 
     try {
-      const response = await fetch(`${apiUrl}/chat`, {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message })
-      })
+      await fetchEventSource(`${apiUrl}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          thread_id: threadId,
+        }),
+        signal: controller.signal,
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+        onmessage(event) {
+          if (event.data === "[DONE]") {
+            controller.abort()
+            return
+          }
 
-      const reader = response.body!.getReader()
-      const decoder = new TextDecoder()
-
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        
-        // Parse SSE format: "data: content\n\n"
-        const lines = chunk.split('\n')
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const content = line.slice(6) // Remove "data: " prefix
-            
-            // Skip [DONE] signal
-            if (content === '[DONE]') continue
-            
-            // For plain text streaming
-            setData((prev) => prev + content)
-            
+          setMessages(prev => {
+            const last = prev[prev.length - 1]
+          
+            if (last?.role === "assistant") {
+              return [
+                ...prev.slice(0, -1),
+                { role: "assistant", content: last.content + event.data }
+              ]
             }
-        }
-      }
-    } catch (error) {
-      setError('Failed to get response from server')
-      console.error("Error:", error)
-    } finally {
-      setLoading(false)
+          
+            return [
+              ...prev,
+              { role: "assistant", content: event.data }
+            ]
+          })
+        },
+
+        onerror(err) {
+          console.error(err)
+          setError("Streaming failed")
+          controller.abort()
+        },
+
+        onclose() {
+        },
+      })
+    } catch (err) {
+      console.error(err)
+      setError("Connection failed")
     }
   }
 
+  const newChat = () => {
+    setMessages([])
+  }
+
   return (
-    <>
-      <div className='chat-wrapper'>
-        <h2>LLM Agent Chat</h2>
-        <textarea
-          className='styled-textarea'
-          placeholder='Ask about weather in any city'
-          rows={4}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button 
-          onClick={startStreaming}
-          disabled={loading}
-        >
-          {loading ? 'Thinking...' : 'Send'}
-        </button>
+    <div className="chat-wrapper">
+      <h2>LLM Agent Chat</h2>
 
-        {error && <p className='error'>{error}</p>}
-
-        {data && (
-          <div className='reply-box'>
-            <strong>Agent:</strong>
-            <Markdown>{data}</Markdown>
+      <div className="chat-box">
+        {messages.map((msg, index) => (
+          <div key={index} className={`message ${msg.role}`}>
+            <div className="bubble">
+              <Markdown>{msg.content}</Markdown>
+            </div>
           </div>
-        )}
+        ))}
+        <div ref={messagesEndRef} />
       </div>
-    </>
+
+      {error && <p className="error">{error}</p>}
+
+      <div className="input-area">
+        <textarea
+          rows={3}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask something about weather..."
+          onKeyDown={(e)=> {
+            if(e.key === "Enter"){
+                sendMessage()
+            } }}
+        />
+        <div className="actions">
+        <button onClick={newChat}>New Chat</button>
+        </div>
+      </div>
+    </div>
   )
 }
 
