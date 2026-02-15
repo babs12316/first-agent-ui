@@ -12,6 +12,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
@@ -31,6 +32,7 @@ function App() {
     const userMessage = input
     setInput("")
     setError(null)
+    setLoading(true)
 
 
     // Add user message
@@ -56,28 +58,31 @@ function App() {
         onmessage(event) {
           if (event.data === "[DONE]") {
             controller.abort()
+            setLoading(false)
             return
           }
 
           setMessages(prev => {
             const last = prev[prev.length - 1]
-          
+
             if (last?.role === "assistant") {
               return [
                 ...prev.slice(0, -1),
                 { role: "assistant", content: last.content + event.data }
               ]
             }
-          
+
             return [
               ...prev,
               { role: "assistant", content: event.data }
             ]
           })
+          setLoading(false)
         },
 
         onerror(err) {
           console.error(err)
+          setLoading(false)
           setError("Streaming failed")
           controller.abort()
         },
@@ -102,7 +107,7 @@ function App() {
       <div className="chat-box">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.role}`}>
-            <div className="bubble">
+            <div className="bubble" style={{ whiteSpace: 'pre-wrap' }}>
               <Markdown>{msg.content}</Markdown>
             </div>
           </div>
@@ -114,17 +119,27 @@ function App() {
 
       <div className="input-area">
         <textarea
+          className="chat-textarea"
           rows={3}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask something about weather..."
-          onKeyDown={(e)=> {
-            if(e.key === "Enter"){
-                sendMessage()
-            } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              sendMessage()
+            }
+          }}
         />
+        <button
+          className="send-button"
+          onClick={sendMessage}
+          disabled={loading}
+        >
+          →
+        </button>
+
         <div className="actions">
-        <button onClick={newChat}>New Chat</button>
+          <button onClick={newChat}>New Chat</button>
         </div>
       </div>
     </div>

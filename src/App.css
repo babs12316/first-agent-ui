@@ -48,6 +48,9 @@
 .input-area{
   display: flex;
   flex-direction: column;
+  position: relative;   /* 🔥 THIS IS CRITICAL */
+  width: 100%;
+  max-width: 600px;
 }
 
 
@@ -136,3 +139,36 @@
 }
 
 
+
+.chat-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px 50px 12px 12px; /* space for button */
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  resize: none;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.send-button {
+  position: absolute;
+  bottom: 90px;
+  right: 25px;
+  width: 36px !important;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #10a37f;
+  color: white;
+  cursor: pointer;
+}
+
+.send-button:hover {
+  background: #0e8e6d;
+}
+
+.send-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
