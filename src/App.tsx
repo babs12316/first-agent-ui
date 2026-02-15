@@ -102,7 +102,7 @@ function App() {
 
   return (
     <div className="chat-wrapper">
-      <h2>LLM Agent Chat</h2>
+      <h2>Weather Agent </h2>
 
       <div className="chat-box">
         {messages.map((msg, index) => (
