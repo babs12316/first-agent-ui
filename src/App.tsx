@@ -187,7 +187,7 @@ function App() {
             rows={3}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask something about weather..."
+            placeholder="add your tasks"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
