@@ -171,3 +171,12 @@ body {
 .thread-item.active-thread {
   background-color: #4a90e2;
 }
+
+.warming-up-msg {
+  padding: 10px;
+  margin: 10px 0;
+  font-style: italic;
+  color: #ff9800;
+  background-color: #fff3e0;
+  border-radius: 6px;
+}

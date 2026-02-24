@@ -24,6 +24,7 @@ function App() {
   const [input, setInput] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [warmingUp, setWarmingUp] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const apiUrl = import.meta.env.VITE_API_URL
@@ -53,6 +54,9 @@ function App() {
 
     const controller = new AbortController()
 
+      const warmingTimer = setTimeout(() => {
+    setWarmingUp(true)
+  }, 2000) // Show warming up message after 2 seconds
     try {
       await fetchEventSource(`${apiUrl}/chat`, {
         method: "POST",
@@ -64,6 +68,7 @@ function App() {
           if (event.data === "[DONE]") {
             controller.abort()
             setLoading(false)
+            clearTimeout(warmingTimer) 
             return
           }
 
@@ -91,6 +96,7 @@ function App() {
         onerror(err) {
           console.error(err)
           setError("Streaming failed")
+          clearTimeout(warmingTimer) 
           controller.abort()
           setLoading(false)
         },
@@ -98,6 +104,7 @@ function App() {
     } catch (err) {
       console.error(err)
       setError("Connection failed")
+      clearTimeout(warmingTimer) 
     }
   }
 
@@ -169,6 +176,11 @@ function App() {
 
       {/* Chat Area */}
       <div className="chat-area">
+        {warmingUp && !loading && (
+  <div className="warming-up-msg">
+    ⚡ Server is waking up, please wait a few seconds...
+  </div>
+)}
         <div className="chat-box">
           {currentMessages.map((msg, index) => (
             <div key={index} className={`message ${msg.role}`}>
