@@ -65,7 +65,8 @@ function App() {
         signal: controller.signal,
 
         onmessage(event) {
-          if (event.data === "[DONE]") {
+          const data = event.data.trim()
+          if (data === "[DONE]") {
             controller.abort()
             setLoading(false)
             clearTimeout(warmingTimer) 
