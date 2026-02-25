@@ -66,6 +66,8 @@ function App() {
 
         onmessage(event) {
           const data = event.data.trim()
+            setWarmingUp(false)
+            clearTimeout(warmingTimer)
           if (data === "[DONE]") {
             controller.abort()
             setLoading(false)
