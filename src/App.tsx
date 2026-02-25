@@ -55,6 +55,7 @@ function App() {
     const controller = new AbortController()
 
       const warmingTimer = setTimeout(() => {
+        console.log("Showing warming up message")
     setWarmingUp(true)
   }, 2000) // Show warming up message after 2 seconds
     try {
@@ -66,6 +67,8 @@ function App() {
 
         onmessage(event) {
           const data = event.data.trim()
+          console.log("Received data:", data)
+          console.log("hiding warming up message")
             setWarmingUp(false)
             clearTimeout(warmingTimer)
           if (data === "[DONE]") {
