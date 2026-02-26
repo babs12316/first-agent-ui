@@ -56,7 +56,7 @@ function App() {
 
       const warmingTimer = setTimeout(() => {
     setWarmingUp(true)
-  }, 2000) // Show warming up message after 2 seconds
+  }, 1) // Show warming up message after 2 seconds
     try {
       await fetchEventSource(`${apiUrl}/chat`, {
         method: "POST",
@@ -179,7 +179,7 @@ function App() {
 
       {/* Chat Area */}
       <div className="chat-area">
-        {warmingUp && !loading && (
+        {warmingUp && (
   <div className="warming-up-msg">
     ⚡ Server is waking up, please wait a few seconds...
   </div>
