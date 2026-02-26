@@ -180,3 +180,21 @@ body {
   background-color: #fff3e0;
   border-radius: 6px;
 }
+
+.bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.bubble th,
+.bubble td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: left;
+}
+
+.bubble th {
+  background-color: #1f2937;
+  color: white;
+}

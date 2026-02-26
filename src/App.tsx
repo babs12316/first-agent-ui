@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { fetchEventSource } from "@microsoft/fetch-event-source"
 import Markdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import "./App.css"
 
 type Message = {
@@ -56,7 +57,7 @@ function App() {
 
       const warmingTimer = setTimeout(() => {
     setWarmingUp(true)
-  }, 1) // Show warming up message after 2 seconds
+  }, 2000) 
     try {
       await fetchEventSource(`${apiUrl}/chat`, {
         method: "POST",
@@ -66,14 +67,17 @@ function App() {
 
         onmessage(event) {
           const data = event.data.trim()
-            setWarmingUp(false)
-            clearTimeout(warmingTimer)
-          if (data === "[DONE]") {
-            controller.abort()
-            setLoading(false)
-            clearTimeout(warmingTimer) 
-            return
-          }
+          
+          // Check if stream is complete
+          const isDone = data.includes("[DONE]")
+          // Remove [DONE] marker from content
+          const cleanData = data.replace("[DONE]", "").trim()
+
+          setWarmingUp(false)
+          clearTimeout(warmingTimer)
+
+          // Process any actual content before [DONE]
+          if (cleanData) {
 
           setThreads(prev =>
             prev.map(thread => {
@@ -85,15 +89,21 @@ function App() {
                   ...thread,
                   messages: [
                     ...thread.messages.slice(0, -1),
-                    { role: "assistant", content: last.content + event.data }
+                    { role: "assistant", content: last.content + cleanData }
                   ]
                 }
               }
 
-              return { ...thread, messages: [...thread.messages, { role: "assistant", content: event.data }] }
+              return { ...thread, messages: [...thread.messages, { role: "assistant", content: cleanData }] }
             })
           )
-          setLoading(false)
+          }
+
+          // Stop streaming when [DONE] is received
+          if (isDone) {
+            controller.abort()
+            setLoading(false)
+          }
         },
 
         onerror(err) {
@@ -188,7 +198,7 @@ function App() {
           {currentMessages.map((msg, index) => (
             <div key={index} className={`message ${msg.role}`}>
               <div className="bubble">
-                <Markdown>{msg.content}</Markdown>
+                <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
               </div>
             </div>
           ))}
@@ -202,7 +212,7 @@ function App() {
             rows={3}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="add your tasks"
+            placeholder="Add a task (e.g., 'Write a blog post about AI at 3:30 PM tomorrow')"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
