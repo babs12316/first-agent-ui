@@ -55,9 +55,8 @@ function App() {
     const controller = new AbortController()
 
       const warmingTimer = setTimeout(() => {
-        console.log("Showing warming up message")
     setWarmingUp(true)
-  }, 2000) // Show warming up message after 2 seconds
+  }, 1) // Show warming up message after 2 seconds
     try {
       await fetchEventSource(`${apiUrl}/chat`, {
         method: "POST",
@@ -67,8 +66,6 @@ function App() {
 
         onmessage(event) {
           const data = event.data.trim()
-          console.log("Received data:", data)
-          console.log("hiding warming up message")
             setWarmingUp(false)
             clearTimeout(warmingTimer)
           if (data === "[DONE]") {
@@ -182,7 +179,7 @@ function App() {
 
       {/* Chat Area */}
       <div className="chat-area">
-        {warmingUp && !loading && (
+        {warmingUp && (
   <div className="warming-up-msg">
     ⚡ Server is waking up, please wait a few seconds...
   </div>
